@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compliance Audit & Evidence Verification System</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar / Header -->
+    <header class="navbar">
+      <div class="brand">
+        <span class="shield-icon">🛡️</span>
+        <div>
+          <h1>ComplianceAudit AI</h1>
+          <p>Automated Regulatory Readiness & Evidence Mapping</p>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <a href="/download-report" class="btn primary-btn">📄 Export PDF Audit Report</a>
+        <button id="refreshBtn" class="btn secondary-btn">🔄 Refresh Score</button>
+      </div>
+    </header>
+
+    <main class="content-container">
+      <!-- Framework Badges -->
+      <div class="frameworks-bar">
+        <span class="framework-tag">NIST SP 800-53 (AC, AU, SC)</span>
+        <span class="framework-tag">ISO/IEC 27001:2022</span>
+        <span class="framework-tag">GDPR (Art. 25, 32, 33)</span>
+        <span class="framework-tag">PCI-DSS v4.0</span>
+        <span class="framework-tag">SOX Section 302</span>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <section class="kpi-grid">
+        <div class="kpi-card accent-card">
+          <div class="kpi-label">Audit Readiness Score</div>
+          <div class="kpi-score" id="auditScore">--%</div>
+          <div class="kpi-sub" id="auditScoreSub">Evaluating continuous compliance...</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Total Requirements</div>
+          <div class="kpi-val" id="totalReqs">9</div>
+          <div class="kpi-sub">Across 3 Core Policies</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Evidence Artifacts</div>
+          <div class="kpi-val" id="totalEvidence">250+</div>
+          <div class="kpi-sub">KMS, IAM, Logs, Backup Certs</div>
+        </div>
+        <div class="kpi-card warning-card">
+          <div class="kpi-label">Identified Gaps</div>
+          <div class="kpi-val" id="gapCount">--</div>
+          <div class="kpi-sub text-danger">Requires immediate remediation</div>
+        </div>
+      </section>
+
+      <!-- Main Audit Matrix Section -->
+      <section class="matrix-card">
+        <div class="card-header">
+          <div>
+            <h2>Policy Requirements & Evidence Verification Matrix</h2>
+            <p>Sentence-Transformers (all-MiniLM-L6-v2) semantic similarity vector mappings</p>
+          </div>
+          <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="COMPLIANT">Compliant</button>
+            <button class="filter-btn" data-filter="GAP">Gaps</button>
+            <button class="filter-btn" data-filter="NON_COMPLIANT">Non-Compliant</button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th>Requirement ID</th>
+                <th>Policy Domain</th>
+                <th>Status</th>
+                <th>Risk Level</th>
+                <th>Evidence Source</th>
+              </tr>
+            </thead>
+            <tbody id="matrixTableBody">
+              <tr>
+                <td colspan="5" class="loading-state">Loading compliance assessment...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    let allResults = [];
+
+    async function fetchComplianceData() {
+      try {
+        const [scoreRes, reqsRes, evidenceRes] = await Promise.all([
+          fetch("/score").then(r => r.json()),
+          fetch("/requirements").then(r => r.json()).catch(() => []),
+          fetch("/evidence").then(r => r.json()).catch(() => [])
+        ]);
+
+        // Update KPIs
+        const score = scoreRes.score ?? 0;
+        document.getElementById("auditScore").textContent = `${score}%`;
+        document.getElementById("auditScoreSub").textContent = score >= 80 ? "Audit Ready (Passing Grade)" : "Remediation Required";
+
+        if (reqsRes.length) document.getElementById("totalReqs").textContent = reqsRes.length;
+        if (evidenceRes.length) document.getElementById("totalEvidence").textContent = evidenceRes.length;
+
+        allResults = scoreRes.results || [];
+        const gaps = allResults.filter(r => r.status === "GAP" || r.status === "NON_COMPLIANT").length;
+        document.getElementById("gapCount").textContent = gaps;
+
+        renderTable(allResults);
+      } catch (err) {
+        console.error("Error loading compliance data:", err);
+      }
+    }
+
+    function renderTable(items) {
+      const tbody = document.getElementById("matrixTableBody");
+      if (!items || items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="loading-state">No assessment results available. Ingest evidence first.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map(item => {
+        const statusClass = item.status === "COMPLIANT" ? "tag-compliant" : (item.status === "GAP" ? "tag-gap" : "tag-critical");
+        const riskClass = item.risk === "LOW" ? "risk-low" : "risk-critical";
+        
+        // Derive human domain from ID
+        let domain = "Access Control & Identity";
+        if (item.requirement_id.includes("ENC")) domain = "Data Encryption & Protection";
+        if (item.requirement_id.includes("AUD")) domain = "Audit Logging & Retention";
+
+        return `
+          <tr>
+            <td><strong>${item.requirement_id}</strong></td>
+            <td>${domain}</td>
+            <td><span class="status-tag ${statusClass}">${item.status}</span></td>
+            <td><span class="risk-badge ${riskClass}">${item.risk}</span></td>
+            <td class="text-muted">Automated Log / KMS / IAM Telemetry</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // Filter controls
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const filter = btn.getAttribute("data-filter");
+        if (filter === "all") {
+          renderTable(allResults);
+        } else {
+          renderTable(allResults.filter(i => i.status === filter));
+        }
+      });
+    });
+
+    document.getElementById("refreshBtn").addEventListener("click", fetchComplianceData);
+    fetchComplianceData();
+  </script>
+</body>
+</html>
