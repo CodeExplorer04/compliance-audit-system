@@ -1,4 +1,4 @@
-# 🛡️ Automated Compliance Audit & Evidence Collection System
+# Automated Compliance Audit & Evidence Collection System
 
 > **AI-Powered Regulatory Compliance Engine, Evidence Verification & Audit Readiness Platform**
 
@@ -10,7 +10,7 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
 Maintaining regulatory compliance across **ISO/IEC 27001, NIST SP 800-53, GDPR, PCI-DSS, and SOX** in modern enterprises typically involves grueling, manual evidence collection across fragmented cloud and on-prem systems.
 
@@ -23,7 +23,7 @@ The **Compliance Audit System** automates this entire audit lifecycle:
 
 ---
 
-## 🏗️ Architecture & Data Flow
+## Architecture & Data Flow
 
 ```mermaid
 flowchart TD
@@ -39,7 +39,7 @@ flowchart TD
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 compliance-audit-system/
@@ -62,7 +62,7 @@ compliance-audit-system/
 
 ---
 
-## 📜 Regulatory Standards Covered
+## Regulatory Standards Covered
 
 - **NIST SP 800-53:** AC-2 (Account Management), AC-3 (Access Enforcement), AU-2 (Audit Events), AU-5, SC-7 (Boundary Protection)
 - **ISO/IEC 27001:** A.6 (Organization of Information Security), A.10 (Cryptography), A.12 (Operations Security), A.13 (Communications Security)
@@ -72,7 +72,7 @@ compliance-audit-system/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Prerequisites
 - Python 3.10+ (tested on Python 3.11 & 3.13)
@@ -116,7 +116,7 @@ The server will start on `http://127.0.0.1:5000`.
 
 ---
 
-## 📡 API Reference
+## API Reference
 
 ### 1. Health & Root Probe
 - **`GET /`**
@@ -150,7 +150,7 @@ The server will start on `http://127.0.0.1:5000`.
 
 ---
 
-## 📊 Generating PDF Audit Reports
+## Generating PDF Audit Reports
 
 To generate an executive compliance scorecard PDF:
 
@@ -161,6 +161,6 @@ This generates `Compliance_Report.pdf` with overall compliance percentage, break
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the [MIT License](LICENSE).
